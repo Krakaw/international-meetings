@@ -3,57 +3,67 @@
         <md-app>
             <md-app-toolbar class="md-primary">
                 <span class="md-title">International Meeting Planner</span>
+                <md-button @click="addGroup" class="md-icon-button md-accent">
+                    <md-icon>add</md-icon>
+                </md-button>
             </md-app-toolbar>
 
-            <md-app-drawer md-permanent="full">
-                <md-toolbar class="md-transparent" md-elevation="0">
-                    Navigation
-                </md-toolbar>
-
-                <md-list>
-                    <md-list-item>
-                        <md-icon>move_to_inbox</md-icon>
-                        <span class="md-list-item-text">Inbox</span>
-                    </md-list-item>
-
-                    <md-list-item>
-                        <md-icon>send</md-icon>
-                        <span class="md-list-item-text">Sent Mail</span>
-                    </md-list-item>
-
-                    <md-list-item>
-                        <md-icon>delete</md-icon>
-                        <span class="md-list-item-text">Trash</span>
-                    </md-list-item>
-
-                    <md-list-item>
-                        <md-icon>error</md-icon>
-                        <span class="md-list-item-text">Spam</span>
-                    </md-list-item>
-                </md-list>
-            </md-app-drawer>
-
             <md-app-content>
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Error quibusdam, non molestias et! Earum magnam, similique, quo recusandae placeat dicta asperiores modi sint ea repudiandae maxime? Quae non explicabo, neque.</p>
+                <v-groups v-model="groups"></v-groups>
             </md-app-content>
         </md-app>
     </div>
 </template>
 
 <script>
+    import VGroups from './components/Groups';
     import Vue from 'vue'
-    import {MdApp,MdContent, MdDrawer,  MdToolbar, MdList, MdIcon} from 'vue-material/dist/components';
+    import {MdApp,MdContent, MdDrawer,  MdToolbar, MdList, MdIcon, MdButton} from 'vue-material/dist/components';
     Vue.use(MdApp);
     Vue.use(MdContent);
     Vue.use(MdDrawer);
     Vue.use(MdToolbar);
     Vue.use(MdList);
     Vue.use(MdIcon);
+    Vue.use(MdButton);
 
 
     export default {
         name: 'app',
         components: {
+            VGroups
+        },
+        data() {
+            return {
+                triggerLocalStorage: false
+            }
+        },
+
+        computed: {
+            groups: {
+                get() {
+                    // eslint-disable-next-line
+                    let trigger = this.triggerLocalStorage;
+                    let groupsString = window.localStorage.getItem('groups') || '[]';
+                    return JSON.parse(groupsString);
+                },
+                set(val) {
+                    this.triggerLocalStorage = !this.triggerLocalStorage;
+                    window.localStorage.setItem("groups", JSON.stringify(val));
+                    return val;
+                }
+            }
+
+        },
+        methods: {
+            addGroup(){
+                let groups = this.groups;
+                groups.push({
+                    name: '',
+                    timezones: []
+                });
+                this.$set(this, 'groups', groups);
+            }
         }
     }
 </script>
