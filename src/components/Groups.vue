@@ -6,21 +6,26 @@
                 <md-field md-inline>
                     <label>Name</label>
                     <md-input @input="setValue(i, 'name', $event)" :value="group.name"></md-input>
+                    <md-button @click="addTime(i)" class="md-icon-button md-primary" md-dense>
+                        <md-icon>add</md-icon>
+                    </md-button>
                 </md-field>
 
             </md-card-header>
 
             <md-card-content>
-                <md-button @click="addTime(i)" class="md-icon-button">
-                    <md-icon>add</md-icon>
-                </md-button>
+
                 <div v-for="(tz, j) in group.timezones" :key="j" >
-                    <select @input="emit" v-model="tz.timezone">
-                        <option v-for="tzName in timezones" :value="tzName" :key="tzName">{{tzName}}</option>
-                    </select>
+                    <div style="display: flex">
+                        <span @click="updateTimezone(i,j)">{{tz.description || tz.timezone}}</span>
+                        <span style="flex:1"></span>
+                        <input type="text" @change="setRootTime(i, tz.timezone, $event)"  :value="timeForTz(i, tz.timezone)">
+                    </div>
+                    <div style="text-align: left">
+                        <span class="time-tick">{{currentTicks[tz.timezone]}}</span>
+                    </div>
+
                     <!--<input  type="text" @input="emit" v-model="tz.description">-->
-                    <input type="text" @change="setRootTime(i, tz.timezone, $event)" :value="timeForTz(i, tz.timezone)">
-                    <span class="time-tick">{{currentTicks[tz.timezone]}}</span>
                 </div>
             </md-card-content>
 
@@ -30,9 +35,12 @@
                 </md-button>
             </md-card-actions>
         </md-card>
+        <v-timezone :show-dialog="showDialog" :value="editTimezone" @input="setTimezone" @close="showDialog = false"></v-timezone>
+
     </div>
 </template>
 <script>
+    import VTimezone from './Timezone';
     import moment from 'moment-timezone';
     import Vue from 'vue'
     import {MdCard, MdButton, MdField } from 'vue-material/dist/components';
@@ -48,6 +56,13 @@
         },
         data() {
             return {
+                currentGroupIndex: -1,
+                currentTimezoneEditIndex: -1,
+                editTimezone: {
+                    timezone: '',
+                    description: ''
+                },
+                showDialog: false,
                 tickInterval: false,
                 times: {
 
@@ -56,6 +71,9 @@
 
                 }
             }
+        },
+        components: {
+            VTimezone
         },
         computed: {
             timezones() {
@@ -70,6 +88,26 @@
             }
         },
         methods: {
+            setTimezone(timezone) {
+                if (this.currentTimezoneEditIndex > -1) {
+                    this.value[this.currentGroupIndex].timezones.splice(this.currentTimezoneEditIndex, 1, timezone);
+                } else {
+                    this.value[this.currentGroupIndex].timezones.push(timezone);
+                }
+                this.emit();
+                this.currentGroupIndex = -1;
+                this.currentTimezoneEditIndex = -1;
+            },
+            updateTimezone(groupIndex, timezoneIndex) {
+                this.currentGroupIndex = groupIndex;
+                this.currentTimezoneEditIndex = timezoneIndex;
+
+                this.$set(this, 'editTimezone', timezoneIndex > -1 ? {...this.value[this.currentGroupIndex].timezones[timezoneIndex]} : {timezone: moment.tz.guess(), description: ''});
+                this.showDialog = true;
+            },
+            addTime(index) {
+                this.updateTimezone(index, -1);
+            },
             removeGroup(index) {
                 this.value.splice(index, 1);
                 this.$emit('input', this.value);
@@ -109,13 +147,7 @@
                 this.$set(this.value[index], fieldName, value);
                 this.$emit('input', this.value);
             },
-            addTime(index) {
-                this.value[index].timezones.push({
-                    timezone: moment.tz.guess(),
-                    description: ""
-                });
-                this.$emit('input', this.value);
-            }
+
         },
         created() {
             this.tickInterval = setInterval(() => {
@@ -136,7 +168,7 @@
         font-size: 0.5em
     }
     .md-card {
-        width: 240px;
+        width: 320px;
         margin: 4px;
         display: inline-block;
         vertical-align: top;

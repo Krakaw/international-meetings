@@ -18,6 +18,8 @@
 <script>
     import VGroups from './components/Groups';
     import Vue from 'vue'
+    import VueMaterial from 'vue-material'
+    Vue.use(VueMaterial);
     import {MdApp,MdContent, MdDrawer,  MdToolbar, MdList, MdIcon, MdButton} from 'vue-material/dist/components';
     Vue.use(MdApp);
     Vue.use(MdContent);
