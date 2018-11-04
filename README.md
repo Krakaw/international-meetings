@@ -1,5 +1,7 @@
 # international-meeting
 
+Demo [https://krakaw.github.io/international-meetings/](https://krakaw.github.io/international-meetings/)
+
 ## Project setup
 ```
 npm install
