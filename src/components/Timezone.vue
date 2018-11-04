@@ -21,7 +21,8 @@
 <script>
     import moment from 'moment-timezone';
     import Vue from 'vue'
-    import {MdDialog, MdAutocomplete,MdField } from 'vue-material/dist/components';
+    import {MdDialog, MdMenu, MdAutocomplete,MdField } from 'vue-material/dist/components';
+    Vue.use(MdMenu);
     Vue.use(MdDialog);
     Vue.use(MdAutocomplete);
     Vue.use(MdField);
