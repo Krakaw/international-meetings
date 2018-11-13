@@ -8,16 +8,12 @@
                         <md-input @input="setValue(groupIndex, 'name', $event)" :value="group.name"></md-input>
 
                     </md-field>
-                    <md-button @click="removeGroup(groupIndex)" class="md-icon-button md-accent">
+                    <md-button @click="removeGroup(groupIndex)" class="md-icon-button danger">
                         <md-icon>delete</md-icon>
                     </md-button>
                 </div>
-
-
             </md-card-header>
-
             <md-card-content>
-
                 <div v-for="(tz, timezoneIndex) in group.timezones" :key="timezoneIndex"
                      :class="{'md-invalid': manualTime[groupIndex] && manualTime[groupIndex].timezoneIndex === timezoneIndex &&  manualTime[groupIndex].invalid}"
 
@@ -26,8 +22,13 @@
                         <h2 class="description">{{tz.description || tz.timezone}}</h2>
                         <sub>{{tz.timezone}}</sub>
                         <span style="flex:1"></span>
-                        <md-icon @click.native="updateTimezone(groupIndex,timezoneIndex)">edit</md-icon>
-                        <md-icon @click.native="deleteTimezone(groupIndex,timezoneIndex)">remove</md-icon>
+                        <md-button @click="updateTimezone(groupIndex,timezoneIndex)" class="md-icon-button">
+                            <md-icon>edit</md-icon>
+                        </md-button>
+
+                        <md-button @click="deleteTimezone(groupIndex,timezoneIndex)" class="md-icon-button">
+                            <md-icon>remove</md-icon>
+                        </md-button>
                     </div>
                     <div style="display: flex"
                     >
@@ -45,7 +46,11 @@
             </md-card-content>
 
             <md-card-actions>
-                <md-button @click="addTimezone(groupIndex)" class="md-icon-button md-primary" md-dense>
+                <md-button @click="shareGroup(groupIndex)" class="md-icon-button md-primary" md-dense>
+                    <md-icon>share</md-icon>
+                </md-button>
+                <span style="flex:1"></span>
+                <md-button @click="addTimezone(groupIndex)" class="md-icon-button md-accent" md-dense>
                     <md-icon>add</md-icon>
                 </md-button>
 
@@ -54,18 +59,31 @@
         <v-timezone :show-dialog="showDialog" :value="editTimezone"
                     @input="setTimezone"
                     @close="showDialog = false"></v-timezone>
-
+        <md-dialog-confirm
+                :md-active="showDeleteGroupConfirm"
+                md-title="Delete group?"
+                :md-content="deleteGroupContent"
+                md-confirm-text="Delete"
+                md-cancel-text="Cancel"
+                @md-cancel="onCancelDelete"
+                @md-confirm="onConfirmDelete"/>
+        <md-dialog-alert
+                :md-active.sync="showShareDialog"
+                md-title="Share Link"
+                :md-content="shareLink"/>
     </div>
 </template>
 <script>
     import VTimezone from './Timezone';
     import moment from 'moment-timezone';
     import Vue from 'vue'
-    import {MdCard, MdButton, MdField} from 'vue-material/dist/components';
+    import {MdCard, MdButton, MdField, MdDialogConfirm, MdDialogAlert} from 'vue-material/dist/components';
 
     Vue.use(MdCard);
     Vue.use(MdButton);
     Vue.use(MdField);
+    Vue.use(MdDialogConfirm);
+    Vue.use(MdDialogAlert);
 
     export default {
         props: {
@@ -95,13 +113,22 @@
                 //The manually set time and timezone
                 manualTime: {
                     //groupIndex: {timezone:'', time}
-                }
+                },
+                deleteGroupContent: "",
+                //When not false the dialog is displayed
+                deleteGroupIndex: false,
+                showShareDialog: false,
+                shareLink: "",
+                errorCatch: ""
             }
         },
         components: {
             VTimezone
         },
         computed: {
+            showDeleteGroupConfirm() {
+                return this.deleteGroupIndex !== false;
+            },
             usedTimezones() {
                 let timezones = [];
                 this.value.forEach(group => {
@@ -109,8 +136,22 @@
                 });
                 return Array.from(new Set(timezones));
             },
+            valueGroupHashes() {
+                let hashes = {};
+                this.value.forEach(group => {
+                    hashes[this.createGroupHash(group)] = true;
+                });
+                return hashes;
+            }
         },
         methods: {
+            createGroupHash(group) {
+                let hash = group.name;
+                return group.timezones.reduce((prev, curr) => {
+                    hash += curr.description || curr.timezone;
+                    return hash;
+                }, '');
+            },
             /**
              * Set the time for manual entry, this stops the clock for the block
              * @param groupIndex
@@ -218,12 +259,32 @@
             },
 
             /**
-             * Remove a group
+             * Launch the popup and set the vars to delete a group
              * @param groupIndex
              */
             removeGroup(groupIndex) {
-                this.value.splice(groupIndex, 1);
+                this.$set(this, 'deleteGroupContent', `Delete ${this.value[groupIndex].name || "this group" }`);
+                this.$set(this, 'deleteGroupIndex', groupIndex);
+            },
+            /**
+             * Delete was cancelled
+             */
+            onCancelDelete() {
+                this.$set(this, 'deleteGroupIndex', false);
+            },
+            /**
+             * Delete was confirmed
+             */
+            onConfirmDelete() {
+                this.value.splice(this.deleteGroupIndex, 1);
                 this.$emit('input', this.value);
+                this.$set(this, 'deleteGroupIndex', false);
+            },
+            shareGroup(groupIndex) {
+                let href = encodeURI(`${window.location.origin}?groups=[${JSON.stringify(this.value[groupIndex])}]`);
+                let shareLink = `<a href="${href}" target="_blank">${href}</a>`;
+                this.$set(this, 'shareLink', shareLink);
+                this.$set(this, 'showShareDialog', true);
             },
             /**
              * Set the parent value
@@ -258,12 +319,35 @@
              */
             endTracking() {
                 clearInterval(this.tickInterval);
-            }
+            },
+            /**
+             * Add group from url
+             */
+            addUrlGroups(urlGroups) {
+                if (!urlGroups || urlGroups.length === 0) {
+                    return;
+                }
+                urlGroups.forEach(group => {
+                    let hash  = this.createGroupHash(group);
+                    if (!this.valueGroupHashes.hasOwnProperty(hash)) {
+                        //Adding group from url
+                        this.value.unshift(group);
+                        this.$emit('input', this.value);
+                    }
 
+                });
+            }
         },
         created() {
+            let uri = window.location.search.substring(1);
+            let params = new URLSearchParams(uri);
+            try {
+                let urlGroups = JSON.parse(params.get("groups"));
+                this.addUrlGroups(urlGroups);
+            } catch (e) {
+                this.errorCatch = "Invalid share param";
+            }
             this.startTracking();
-
         },
         beforeDestroy() {
             this.endTracking();
@@ -273,7 +357,6 @@
 <style>
     .name-holder {
         display: flex;
-        cursor: pointer;
     }
 
     .name-holder:hover {
