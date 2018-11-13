@@ -281,7 +281,7 @@
                 this.$set(this, 'deleteGroupIndex', false);
             },
             shareGroup(groupIndex) {
-                let href = encodeURI(`${window.location.origin}?groups=[${JSON.stringify(this.value[groupIndex])}]`);
+                let href = encodeURI(`${window.location.origin}${window.location.pathname}?groups=[${JSON.stringify(this.value[groupIndex])}]`);
                 let shareLink = `<a href="${href}" target="_blank">${href}</a>`;
                 this.$set(this, 'shareLink', shareLink);
                 this.$set(this, 'showShareDialog', true);
