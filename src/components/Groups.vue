@@ -19,16 +19,27 @@
 
                 >
                     <div class="name-holder">
-                        <h2 class="description">{{tz.description || tz.timezone}}</h2>
-                        <sub>{{tz.timezone}}</sub>
-                        <span style="flex:1"></span>
-                        <md-button @click="updateTimezone(groupIndex,timezoneIndex)" class="md-icon-button">
-                            <md-icon>edit</md-icon>
-                        </md-button>
+                        <div style="display: flex; flex-direction: column">
+                            <sub>{{tz.timezone}}</sub>
+                            <h2 class="description">{{tz.description || tz.timezone}}</h2>
+                        </div>
 
-                        <md-button @click="deleteTimezone(groupIndex,timezoneIndex)" class="md-icon-button">
-                            <md-icon>remove</md-icon>
-                        </md-button>
+                        <span style="flex:1"></span>
+                        <md-menu md-size="small">
+                            <md-button md-menu-trigger class="md-icon-button">
+                                <md-icon>more_vert</md-icon>
+                            </md-button>
+                            <md-menu-content>
+                                <md-menu-item @click="updateTimezone(groupIndex,timezoneIndex)" >
+                                    <span>Edit</span>
+                                    <md-icon>edit</md-icon>
+                                </md-menu-item>
+                                <md-menu-item @click="deleteTimezone(groupIndex,timezoneIndex)" >
+                                    <span>Delete</span>
+                                    <md-icon>remove</md-icon>
+                                </md-menu-item>
+                            </md-menu-content>
+                        </md-menu>
                     </div>
                     <div style="display: flex"
                     >
@@ -77,13 +88,14 @@
     import VTimezone from './Timezone';
     import moment from 'moment-timezone';
     import Vue from 'vue'
-    import {MdCard, MdButton, MdField, MdDialogConfirm, MdDialogAlert} from 'vue-material/dist/components';
+    import {MdCard, MdButton, MdField, MdDialogConfirm, MdDialogAlert, MdMenu} from 'vue-material/dist/components';
 
     Vue.use(MdCard);
     Vue.use(MdButton);
     Vue.use(MdField);
     Vue.use(MdDialogConfirm);
     Vue.use(MdDialogAlert);
+    Vue.use(MdMenu);
 
     export default {
         props: {
@@ -357,13 +369,15 @@
 <style>
     .name-holder {
         display: flex;
+        text-align: left;
     }
 
     .name-holder:hover {
     }
 
     .name-holder h2.description {
-        margin-bottom: 5px;
+        margin: 0;
+        padding: 0;
 
     }
 
