@@ -34,21 +34,21 @@ const ipTimezones = {};
 // }
 
 app.get('/:time/*', async (req, res, next) => {
-
     const {time} = req.params;
-
-
     const ip = req.headers['x-forwarded-for'] ||
         req.socket.remoteAddress ||
         null;
+
+    let overrideTimezone = req.query.source || req.query.timezone || req.query.tz;
+
     let setIpTimezone = false;
     let timezone;
-    if (ip && !req.query.timezone) {
+    if (ip && !overrideTimezone) {
         timezone = ipTimezones[ip] || (await (await fetch(`http://ip-api.com/json/${ip}`)).json()).timezone || null;
         setIpTimezone = !!timezone;
         timezone = timezone || 'UTC'
-    } else if (req.query.timezone) {
-        timezone = req.query.timezone;
+    } else if (overrideTimezone) {
+        timezone = overrideTimezone;
     } else {
         timezone = 'UTC';
     }
@@ -56,12 +56,12 @@ app.get('/:time/*', async (req, res, next) => {
     if (setIpTimezone)
         ipTimezones[ip] = timezone;
 
-
-    const [, , ...zonesRaw] = decodeURI(req.originalUrl).split('/')
+    const [encodedParams,] = req.originalUrl.split('?');
+    const [, , ...zonesRaw] = decodeURI(encodedParams).split('/')
     const zones = zonesRaw.join('/').split('|');
 
     let format = guessFormat(time);
-    const sourceTime = moment.tz(time, format, timezone);
+    const sourceTime = moment.tz(time, format, abbreviations[timezone] || timezone);
     const times = {};
 
     times[timezone] = sourceTime.format(format);
