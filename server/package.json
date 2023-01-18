@@ -4,7 +4,7 @@
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "gm": "^1.23.1",
     "moment-guess": "^1.2.2",
     "moment-timezone": "^0.5.33",
