@@ -5,7 +5,7 @@
   },
   "dependencies": {
     "express": "^4.22.1",
-    "gm": "^1.23.1",
+    "gm": "^1.25.1",
     "moment-guess": "^1.2.2",
     "moment-timezone": "^0.5.35",
     "node-fetch": "^2.6.7"
